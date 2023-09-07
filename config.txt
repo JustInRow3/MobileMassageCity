@@ -1,0 +1,6 @@
+[MMC-VARIABLES]
+Keyword = https://apex.ams.com/ords/appsprod/f?p=EPS_START:1:104349989965242:::::
+AutoInstallDriver = False
+ChromeDriver =
+Headless? = False
+
