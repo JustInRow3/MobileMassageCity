@@ -1,3 +1,4 @@
+import openpyxl
 import time
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -10,6 +11,17 @@ import configparser
 import os
 import misc
 import pandas as pd
+
+#Constant filepath of input xlsx file
+filetorun = 'Try' # Filename of excel input inside For_Run folder
+write_excel_path = misc.write_excel_path(filetorun)
+print(write_excel_path)
+
+# Create new excel file every run
+wb = openpyxl.Workbook()
+ws = wb.active
+wb.save(write_excel_path)
+wb.close()
 
 #Parse in Beautiful Soup
 from bs4 import BeautifulSoup
@@ -92,6 +104,9 @@ table = BeautifulSoup(html, "html.parser")
 # Get all Establishments
 establishmentlist = table.findAll('div', class_='deyx8d')
 
+for_save1 = pd.DataFrame()
+for_save2 = pd.DataFrame()
+
 #List every establishment main details
 for each_name in establishmentlist:
     # Set to default
@@ -118,8 +133,10 @@ for each_name in establishmentlist:
         else:
             print('Address: ' + cel.text)
             MAddress = cel.text
-    row = pd.DataFrame(data=[MName, MAddress, MTel, MType]).transpose()
-    print(row)
+    row1 = pd.DataFrame(data=[MName, MAddress, MTel, MType]).transpose()
+    for_save1 = pd.concat([for_save1, row1], ignore_index=True)
+    #for_save1.columns = ["Name", "Address", "Telephone", "Type"]
+    print(for_save1)
 
 establishmentlist_details = table.findAll('div', class_='DyM7H')
 #List every establishment main details
@@ -137,18 +154,18 @@ for each_detail_add in establishmentlist_details:
         elif det.text == "Directions":
             print('Directions: ' + det.find('a')['href'])
             Directions = det.find('a')['href']
-    row = pd.DataFrame(data=[Website, Directions]).transpose()
-    print(row)
-    #time.sleep(1)
+    row2 = pd.DataFrame(data=[Website, Directions]).transpose()
+    for_save2 = pd.concat([for_save2, row2], ignore_index=True)
+    #for_save2.columns = ['Website', 'Directions']
+    print(for_save2)
+excel_out = pd.ExcelWriter(write_excel_path)
+for_excel = pd.concat([for_save1, for_save2], axis=1, ignore_index=True)
+columns = ["Name", "Address", "Telephone", "Type", 'Website', 'Directions']
+for_excel.columns = columns
+for_excel.to_excel(excel_out)
+excel_out.close()
 
-""""[<a aria-label="Website" data-no-redirect="1" href="http://www.kawayanmassage.com/" ping="/url?sa=t&amp;source=web&amp;rct=j&amp;url=http://www.kawayanmassage.com/&amp;ved=2ahUKEwjc2MbNqJqBAxWbAzoCHRiHBOEQgU96BAgAECo&amp;opi=89978449"><div data-ved="2ahUKEwjc2MbNqJqBAxWbAzoCHRiHBOEQgU96BAgAECo" data-website-url="http://www.kawayanmassage.com/" jsaction="JIbuQc:THpQJf" jscontroller="CCRWHf"><div class="VfPpkd-dgl2Hf-ppHlrf-sM5MNb" data-is-touch-wrapper="true"><button aria-hidden="true" class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe LQeN7 DDYJo s73B3c wF1tve Q8G3mf" data-idom-class="Rj2Mlf OLiIxf PDpWxe LQeN7 DDYJo s73B3c wF1tve Q8G3mf" jsaction="click:cOuCgd; mousedown:UX7yZ; mouseup:lbsD7e; mouseenter:tfO1Yc; mouseleave:JywGue; touchstart:p6p2H; touchmove:FwuNnf; touchend:yfqBxc; touchcancel:JMtRjd; focus:AHmuwe; blur:O22p3e; contextmenu:mg9Pef;mlnRJb:fLiPzd;" jscontroller="soHxf" tabindex="-1"><div class="VfPpkd-Jh9lGc"></div><div class="VfPpkd-J1Ukfc-LhBDec"></div><div class="VfPpkd-RLmnJb"></div><span aria-hidden="true" class="VfPpkd-kBDsod"><svg class="NMm5M" focusable="false" height="24" viewbox="0 0 24 24" width="24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-.61.08-1.21.21-1.78L8.99 15v1c0 1.1.9 2 2 2v1.93C7.06 19.43 4 16.07 4 12zm13.89 5.4c-.26-.81-1-1.4-1.9-1.4h-1v-3c0-.55-.45-1-1-1h-6v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41C17.92 5.77 20 8.65 20 12c0 2.08-.81 3.98-2.11 5.4z"></path></svg></span><span class="VfPpkd-vQzf8d" jsname="V67aGc">Website</span></button></div></div></a>]
-Prettify
-[<a aria-label="Directions" href="https://maps.google.com/maps?um=1&amp;fb=1&amp;gl=ph&amp;sa=X&amp;geocode=Kdm5f4-0t5czMecPH0wHOzLO&amp;daddr=Brgy,+Unit+A,+JFMK+Bldg,+111+Kamias+Rd,+Quezon+City,+1100+Metro+Manila&amp;ved=2ahUKEwjc2MbNqJqBAxWbAzoCHRiHBOEQ48ADegQIABAr" role="link" tabindex="0"><div class="VfPpkd-dgl2Hf-ppHlrf-sM5MNb" data-is-touch-wrapper="true"><button aria-hidden="true" class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe LQeN7 DDYJo s73B3c wF1tve Q8G3mf" data-idom-class="Rj2Mlf OLiIxf PDpWxe LQeN7 DDYJo s73B3c wF1tve Q8G3mf" jsaction="click:cOuCgd; mousedown:UX7yZ; mouseup:lbsD7e; mouseenter:tfO1Yc; mouseleave:JywGue; touchstart:p6p2H; touchmove:FwuNnf; touchend:yfqBxc; touchcancel:JMtRjd; focus:AHmuwe; blur:O22p3e; contextmenu:mg9Pef;mlnRJb:fLiPzd;" jscontroller="soHxf" tabindex="-1"><div class="VfPpkd-Jh9lGc"></div><div class="VfPpkd-J1Ukfc-LhBDec"></div><div class="VfPpkd-RLmnJb"></div><span aria-hidden="true" class="VfPpkd-kBDsod"><svg class="NMm5M" enable-background="new 0 0 24 24" focusable="false" height="24" viewbox="0 0 24 24" width="24"><g><rect fill="none" height="24" width="24"></rect></g><g><path d="m21.41 10.59-7.99-8c-.78-.78-2.05-.78-2.83 0l-8.01 8c-.78.78-.78 2.05 0 2.83l8.01 8c.78.78 2.05.78 2.83 0l7.99-8c.79-.79.79-2.05 0-2.83zM13.5 14.5V12H10v3H8v-4c0-.55.45-1 1-1h4.5V7.5L17 11l-3.5 3.5z"></path></g></svg></span><span class="VfPpkd-vQzf8d" jsname="V67aGc">Directions</span></button></div></a>]
-Prettify
-[<a aria-label="Call" class="Od1FEc" data-phone-number="09171435959" data-ved="2ahUKEwjc2MbNqJqBAxWbAzoCHRiHBOEQ5cADegQIABAs" href="tel:09171435959" jsaction="rcuQ6b:npT2md;JIbuQc:F75qrd;F75qrd" jscontroller="hjq3ae" role="button"><div jsaction="JIbuQc:F75qrd"><div class="VfPpkd-dgl2Hf-ppHlrf-sM5MNb" data-is-touch-wrapper="true"><button aria-hidden="true" class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe LQeN7 DDYJo s73B3c wF1tve Q8G3mf" data-idom-class="Rj2Mlf OLiIxf PDpWxe LQeN7 DDYJo s73B3c wF1tve Q8G3mf" jsaction="click:cOuCgd(preventDefault=true); mousedown:UX7yZ; mouseup:lbsD7e; mouseenter:tfO1Yc; mouseleave:JywGue; touchstart:p6p2H; touchmove:FwuNnf; touchend:yfqBxc; touchcancel:JMtRjd; focus:AHmuwe; blur:O22p3e; contextmenu:mg9Pef;mlnRJb:fLiPzd;" jscontroller="soHxf" tabindex="-1"><div class="VfPpkd-Jh9lGc"></div><div class="VfPpkd-J1Ukfc-LhBDec"></div><div class="VfPpkd-RLmnJb"></div><span aria-hidden="true" class="VfPpkd-kBDsod"><svg class="NMm5M" focusable="false" height="24" viewbox="0 0 24 24" width="24"><path d="M16.02 14.46l-2.62 2.62a16.141 16.141 0 0 1-6.5-6.5l2.62-2.62a.98.98 0 0 0 .27-.9L9.15 3.8c-.1-.46-.51-.8-.98-.8H4.02c-.56 0-1.03.47-1 1.03a17.92 17.92 0 0 0 2.43 8.01 18.08 18.08 0 0 0 6.5 6.5 17.92 17.92 0 0 0 8.01 2.43c.56.03 1.03-.44 1.03-1v-4.15c0-.48-.34-.89-.8-.98l-3.26-.65c-.33-.07-.67.04-.91.27z"></path></svg></span><span class="VfPpkd-vQzf8d" jsname="V67aGc">Call</span></button></div></div></a>]
-Prettify
-[<a aria-label="Share" data-hveid="CAAQLQ" data-ved="2ahUKEwjc2MbNqJqBAxWbAzoCHRiHBOEQpMMJegQIABAt" jsaction="RiZTIb;JIbuQc:RiZTIb" jsname="YOuPgf" role="button" tabindex="0"><div><div class="VfPpkd-dgl2Hf-ppHlrf-sM5MNb" data-is-touch-wrapper="true"><button aria-hidden="true" class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe LQeN7 DDYJo s73B3c wF1tve Q8G3mf" data-idom-class="Rj2Mlf OLiIxf PDpWxe LQeN7 DDYJo s73B3c wF1tve Q8G3mf" jsaction="click:cOuCgd; mousedown:UX7yZ; mouseup:lbsD7e; mouseenter:tfO1Yc; mouseleave:JywGue; touchstart:p6p2H; touchmove:FwuNnf; touchend:yfqBxc; touchcancel:JMtRjd; focus:AHmuwe; blur:O22p3e; contextmenu:mg9Pef;mlnRJb:fLiPzd;" jscontroller="soHxf" tabindex="-1"><div class="VfPpkd-Jh9lGc"></div><div class="VfPpkd-J1Ukfc-LhBDec"></div><div class="VfPpkd-RLmnJb"></div><span aria-hidden="true" class="VfPpkd-kBDsod"><svg class="NMm5M hhikbc" focusable="false" height="24" viewbox="0 0 24 24" width="24"><path d="M18 16c-.79 0-1.5.31-2.03.81L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.53.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.48.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.05 4.12c-.05.22-.09.45-.09.69 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3zm0-12c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM6 13c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm12 7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"></path></svg></span><span class="VfPpkd-vQzf8d" jsname="V67aGc">Share</span></button></div></div></a>]
-"""
+
 wd.close()
 wd.quit()
 #rgnuSb xYjf2e
