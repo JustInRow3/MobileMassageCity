@@ -24,4 +24,5 @@ def write_excel_path(file):
     return new_file
 #print(write_excel_path('file'))
 
+def isbusiness(wd):
 
