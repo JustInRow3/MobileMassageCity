@@ -1,7 +1,7 @@
 import misc
 import openpyxl
 import pandas as pd
-#print(misc.write_excel_path('try'))
+""""#print(misc.write_excel_path('try'))
 
 #Constant filepath of input xlsx file
 filetorun = 'Try' # Filename of excel input inside For_Run folder
@@ -17,4 +17,4 @@ wb.close()
 data1 = pd.DataFrame(['as', 'sd', 'fg']).transpose()
 data2 = pd.DataFrame(['qw', 'we', 'er', 'tr']).transpose()
 merge = pd.concat([data1, data2], axis=1)
-print(merge)
+print(merge)""""

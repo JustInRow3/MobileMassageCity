@@ -1,0 +1,7 @@
+Python version: Python 3.10.7
+webdriver-manager        4.0.0
+beautifulsoup4           4.12.2
+pandas                   1.5.0
+openpyxl                 3.1.2
+pip                      23.2.1
+selenium                 4.5.0

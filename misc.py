@@ -2,6 +2,7 @@ import time
 import os
 from pathlib import Path
 
+
 string_ = '1234134145'
 def istellnumber(string):
         int_list = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '.', ' ', '+', '(', ')']
@@ -24,5 +25,12 @@ def write_excel_path(file):
     return new_file
 #print(write_excel_path('file'))
 
-def isbusiness(wd):
+def isbusiness(wd, wait, EC, By, NSE):
+    try:
+        wd.find_element(By.CLASS_NAME, 'YzSd')
+        return True
+    except NSE:
+        return False
 
+#CAYQGA
+#YzSd
