@@ -1,6 +1,7 @@
 import time
 import os
 from pathlib import Path
+import pandas as pd
 
 
 string_ = '1234134145'
@@ -31,6 +32,16 @@ def isbusiness(wd, wait, EC, By, NSE):
         return True
     except NSE:
         return False
-
 #CAYQGA
 #YzSd
+
+def file_(file):
+    script_dir = Path(os.path.dirname(__file__))  # <-- absolute dir the script is in
+    rel_path = Path("/For_Run/" + file)
+    #abs_file_path = os.path.join(script_dir, rel_path)
+    new_file = script_dir.joinpath(*rel_path.parts[1:])
+    return new_file
+def read_xlsx(file):
+    data = pd.read_excel(file_(file))
+    #print(data['Keyword'])
+    return data['Keyword']
