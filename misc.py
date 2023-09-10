@@ -2,7 +2,7 @@ import time
 import os
 from pathlib import Path
 import pandas as pd
-
+import re
 
 string_ = '1234134145'
 def istellnumber(string):
@@ -54,3 +54,17 @@ def read_xlsx(file):
     data = pd.read_excel(file_(file))
     #print(data['Keyword'])
     return data['Keyword']
+
+# - Kontakt
+# - Über uns
+# - Über mich
+# - Impressum
+
+def find_email(wd):
+    html = wd.page_source
+    email_pattern = r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,4}"
+    emails = re.findall(email_pattern, html)
+    print(emails)
+    return emails
+
+
