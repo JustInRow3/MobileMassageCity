@@ -17,6 +17,13 @@ def isOpen(string):
         else:
                 return True
 #print(isOpen(string_))
+def writelogs():
+    filename_date = time.strftime("%Y%m%d%H%M%S", time.localtime())
+    script_dir = Path(os.path.dirname(__file__))  # <-- absolute dir the script is in
+    rel_path = Path(r"/Logs/" + filename_date + '.out')
+    new_file = script_dir.joinpath(*rel_path.parts[1:])
+    #abs_file_path = os.path.join(script_dir, rel_path)
+    return new_file
 def write_excel_path(file):
     filename_date = time.strftime("_%Y%m%d%H%M%S", time.localtime())
     script_dir = Path(os.path.dirname(__file__))  # <-- absolute dir the script is in

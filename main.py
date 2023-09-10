@@ -29,6 +29,13 @@ ws = wb.active
 wb.save(write_excel_path)
 wb.close()
 
+import sys
+f = open(misc.writelogs(), 'w', encoding="utf-8")
+sys.stdout = f
+print("-------------------------------------------------------------------------------" + "\n" +
+      "-------------------------Mobile Massage Script---------------------------------" + "\n" +
+      "-------------------------------------------------------------------------------")
+
 thisfolder = os.path.dirname(os.path.abspath(__file__))
 initfile = os.path.join(thisfolder, 'config.txt')
 # print this folder
@@ -173,6 +180,16 @@ columns = ['Keyword', "Name", "Address", "Telephone", "Type", 'Website', 'Direct
 for_excel2.columns = columns
 for_excel2.to_excel(excel_out)
 excel_out.close()
+"""for website in for_excel2['Website']:
+    if website != 'none':
+        # Open browser window
+        wd = webdriver.Chrome(service=service, options=options)
+        wd.implicitly_wait(10)
+        wd.get(website)
+        wait = WebDriverWait(wd, 50)  # setup wait"""
+
+
+f.close()
 
 
 
