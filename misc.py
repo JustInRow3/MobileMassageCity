@@ -20,7 +20,7 @@ def isOpen(string):
 def writelogs():
     filename_date = time.strftime("%Y%m%d%H%M%S", time.localtime())
     script_dir = Path(os.path.dirname(__file__))  # <-- absolute dir the script is in
-    rel_path = Path(r"/Logs/" + filename_date + '.out')
+    rel_path = Path(r"/Logs/" + 'Logs_' + filename_date + '.out')
     new_file = script_dir.joinpath(*rel_path.parts[1:])
     #abs_file_path = os.path.join(script_dir, rel_path)
     return new_file
@@ -35,8 +35,10 @@ def write_excel_path(file):
 
 def isbusiness(wd, wait, EC, By, NSE):
     try:
-        wd.find_element(By.CLASS_NAME, 'YzSd')
-        return True
+        if wd.find_element(By.CLASS_NAME, 'YzSd').text == 'Businesses':
+            return True
+        else:
+            return False
     except NSE:
         return False
 #CAYQGA

@@ -30,10 +30,10 @@ wb.save(write_excel_path)
 wb.close()
 
 import sys
-f = open(misc.writelogs(), 'w', encoding="utf-8")
+f = open(misc.writelogs(), 'a', encoding="utf-8")
 sys.stdout = f
 print("-------------------------------------------------------------------------------" + "\n" +
-      "-------------------------Mobile Massage Script---------------------------------" + "\n" +
+      "-------------------------Mobile Massage Script Logs----------------------------" + "\n" +
       "-------------------------------------------------------------------------------")
 
 thisfolder = os.path.dirname(os.path.abspath(__file__))
@@ -81,10 +81,10 @@ for keyword_add in misc.read_xlsx(file):
     wd.switch_to.frame(wait.until(EC.presence_of_element_located((By.NAME, 'callout')))) # enter iframe first
     wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="yDmH0d"]/c-wiz/div/div/c-wiz/div/div/div/div[2]/div[2]/button'))).click() # Click signout
     wd.switch_to.default_content()
-    wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'gLFyf'))).send_keys(keyword + ' ' +keyword_add)
+    wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'gLFyf'))).send_keys(str(keyword) + ' ' + str(keyword_add))
     wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'gLFyf'))).send_keys(Keys.RETURN)
     time.sleep(2)
-    fullkeyword = keyword + ' ' + keyword_add
+    fullkeyword = str(keyword) + ' ' + str(keyword_add)
     print('FullKeyword: ' + fullkeyword)
     print(misc.isbusiness(wd=wd, wait=wait, EC=EC, By=By, NSE=NSE))
     if misc.isbusiness(wd=wd, wait=wait, EC=EC, By=By, NSE=NSE):
@@ -94,6 +94,8 @@ for keyword_add in misc.read_xlsx(file):
         morebutton = BeautifulSoup(htmlbutton, "html.parser")
         morebusinesslink = morebutton.findAll('a')
 
+        Results = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'eKPi4'))).text
+        print(Results)
         for link in morebusinesslink:
             link_url = link['href']
             print(link_url)
@@ -142,7 +144,7 @@ for keyword_add in misc.read_xlsx(file):
                 else:
                     print('Address: ' + cel.text)
                     MAddress = cel.text
-            row1 = pd.DataFrame(data=[Keyword, MName, MAddress, MTel, MType]).transpose()
+            row1 = pd.DataFrame(data=[Keyword, Results, MName, MAddress, MTel, MType]).transpose()
             for_save1 = pd.concat([for_save1, row1], ignore_index=True)
             #for_save1.columns = ["Name", "Address", "Telephone", "Type"]
             #print(for_save1)
@@ -169,14 +171,14 @@ for keyword_add in misc.read_xlsx(file):
         for_excel2 = pd.concat([for_excel2, for_excel1], ignore_index=True) # past and present
     else:
         print('Keyword Invalid!')
-        data = pd.DataFrame([Keyword, 'Invalid', 'Invalid', 'Invalid', 'Invalid', 'Invalid', 'Invalid']).transpose() # output of invalid keywork
-        print(data)
-        for_excel2 = pd.concat([for_excel2, data], ignore_index=True)
+        datainvalid = pd.DataFrame([fullkeyword, 'none', 'none', 'none', 'none', 'none', 'none', 'none']).transpose() # output of invalid keywork
+        print(datainvalid)
+        for_excel2 = pd.concat([for_excel2, datainvalid], ignore_index=True)
     #for_excel2 = pd.concat([for_excel2, for_excel1], ignore_index=True)
     wd.close()
     wd.quit()
 excel_out = pd.ExcelWriter(write_excel_path)
-columns = ['Keyword', "Name", "Address", "Telephone", "Type", 'Website', 'Directions']
+columns = ['Keyword', 'Results for', "Name", "Address", "Telephone", "Type", 'Website', 'Directions']
 for_excel2.columns = columns
 for_excel2.to_excel(excel_out)
 excel_out.close()
