@@ -65,7 +65,7 @@ else:
 if headless == 'True':
     options.headless = True
 
-Url = r'https://madlens-sinnesreise.jimdosite.com/impressum/'
+Url = r'https://www.relaxcoach.net/impressum'
 page = requests.get(Url)
 soup = BeautifulSoup(page.content, "html.parser")
 
@@ -90,4 +90,4 @@ options.page_load_strategy = 'eager' # Webdriver waits until DOMContentLoaded ev
 # print(BeautifulSoup(wd.page_source, "html.parser"))
 
 #print(page.get_attribute('outerHTML'))
-print(misc.getcontactnumbers(soup, webdriver=webdriver, url=Url, service=service, options=options))
+print(misc.getcontactnumbers(html=soup, webdriver=webdriver, url=Url, service=service, options=options))

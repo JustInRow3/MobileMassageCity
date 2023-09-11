@@ -94,24 +94,11 @@ def getcontactnumbers(html, webdriver, url, service, options):
         wd.quit()
     for pattern in pattern_list:
         matches = re.findall(pattern, string, flags=re.IGNORECASE)
-        print('list')
-        valid_search = [valid for valid in matches if len(valid) > 5]
-        if len(valid_search)
-        collected.append(matches)
+        valid_search = [valid for valid in matches if valid != []]
+        if len(valid_search) > 0:
+              collected.append(valid_search)
+        #collected.append(matches)
     return collected
-
-session = requests.Session()
-Url = r'https://madlens-sinnesreise.jimdosite.com/impressum'
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299'
-}
-page = session.get(Url, headers=headers)
-soup = BeautifulSoup(page.content, "html.parser")
-#Just a moment...Enable JavaScript and cookies to continue
-
-
-# print(soup.text)
-# print(getcontactnumbers(soup))
 
 #Handy: - done
 #Telefon - done
@@ -124,7 +111,7 @@ soup = BeautifulSoup(page.content, "html.parser")
 #+49 - country code
 def getallemail(url):
     possible_url = ['about', 'about+us', 'impressum', 'contact', 'contact+us',
-                    'kontakt', 'impressum.html', 'kontakt.html', 'über-mich']
+                    'kontakt', 'impressum.html', 'kontakt.html', 'über-mich', '']
     for element in possible_url:
         full_url = url + '/' + element
         response = requests.get(full_url)

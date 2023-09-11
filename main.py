@@ -13,6 +13,7 @@ import configparser
 import os
 import misc
 import pandas as pd
+import requests
 
 #Parse in Beautiful Soup
 from bs4 import BeautifulSoup
@@ -182,14 +183,12 @@ columns = ['Keyword', 'Results for', "Name", "Address", "Telephone", "Type", 'We
 for_excel2.columns = columns
 for_excel2.to_excel(excel_out)
 excel_out.close()
-"""for website in for_excel2['Website']:
-    if website != 'none':
-        # Open browser window
-        wd = webdriver.Chrome(service=service, options=options)
-        wd.implicitly_wait(10)
-        wd.get(website)
-        wait = WebDriverWait(wd, 50)  # setup wait"""
 
+for link in for_excel2['Website']:
+    if link != 'none':
+        page = requests.get(link)
+        soup = BeautifulSoup(page.content, "html.parser")
+        print(misc.getcontactnumbers(html=soup, webdriver=webdriver, url=link, service=service, options=options))
 
 f.close()
 quit()
