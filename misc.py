@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 import pandas as pd
 import re
+import requests
+from bs4 import BeautifulSoup
 
 string_ = '1234134145'
 def istellnumber(string):
@@ -60,11 +62,79 @@ def read_xlsx(file):
 # - Über mich
 # - Impressum
 
-def find_email(wd):
-    html = wd.page_source
+def find_email(html):
     email_pattern = r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,4}"
     emails = re.findall(email_pattern, html)
     print(emails)
     return emails
+
+def getcontactnumbers(html, webdriver, url, service, options):
+    pattern1 = r'(Festnetz*[.:\0-9-\s]+)'
+    pattern2 = r'(Handy*[.:\0-9-\s]+)'
+    pattern3 = r'(Telefon*[.:\0-9-\s]+)'
+    pattern4 = r'(Mobil*[.:\0-9-\s]+)'
+    pattern5 = r'(Tel*[.:\0-9-\s]+)'
+    pattern6 = r'(Fon*[.:\0-9-\s]+)'
+    pattern7 = r'(Telefax*[.:\0-9-\s]+)'
+    pattern8 = r'(Fax*[.:\0-9-\s]+)'
+    pattern9 = r'((\+)[.:\0-9-\s]+)'
+    pattern_list = [pattern9, pattern8, pattern7, pattern6, pattern5, pattern4, pattern3, pattern2, pattern1]
+    needs_selenium = 'Just a moment...Enable JavaScript and cookies to continue'
+    collected = []
+    if html.text != needs_selenium:
+        string = html.text
+        #matches = re.findall(pattern, html.text, flags=re.IGNORECASE)
+    else:
+        wd = webdriver.Chrome(service=service, options=options)
+        wd.implicitly_wait(10)
+        wd.get(url)
+        newsoup = BeautifulSoup(wd.page_source, "html.parser")
+        string = newsoup.text
+        wd.close()
+        wd.quit()
+    for pattern in pattern_list:
+        matches = re.findall(pattern, string, flags=re.IGNORECASE)
+        print('list')
+        valid_search = [valid for valid in matches if len(valid) > 5]
+        if len(valid_search)
+        collected.append(matches)
+    return collected
+
+session = requests.Session()
+Url = r'https://madlens-sinnesreise.jimdosite.com/impressum'
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299'
+}
+page = session.get(Url, headers=headers)
+soup = BeautifulSoup(page.content, "html.parser")
+#Just a moment...Enable JavaScript and cookies to continue
+
+
+# print(soup.text)
+# print(getcontactnumbers(soup))
+
+#Handy: - done
+#Telefon - done
+#Mobil -done
+#Fon - done
+#Telefax
+#Festnetz - done
+#tel : - done
+#Tel. -done
+#+49 - country code
+def getallemail(url):
+    possible_url = ['about', 'about+us', 'impressum', 'contact', 'contact+us',
+                    'kontakt', 'impressum.html', 'kontakt.html', 'über-mich']
+    for element in possible_url:
+        full_url = url + '/' + element
+        response = requests.get(full_url)
+        if response.status_code == 200:
+            print('Web site exists')
+            page = requests.get(full_url).page_source
+            return find_email(page)
+
+        else:
+            print('Web site does not exist')
+            return False
 
 
