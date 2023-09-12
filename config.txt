@@ -1,5 +1,6 @@
 [MMC-VARIABLES]
 Keyword = mobile massage
+Results_Limit = 100
 AutoInstallDriver = False
 ChromeDriver = r'C:\Users\jjie\.wdm\drivers\chromedriver\win64\116.0.5845.180\chromedriver-win32\chromedriver.exe'
 Headless? = False

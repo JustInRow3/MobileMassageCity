@@ -79,9 +79,9 @@ for keyword_add in misc.read_xlsx(file):
     wait = WebDriverWait(wd, 50) # setup wait
 
     #Input keyword
-    wd.switch_to.frame(wait.until(EC.presence_of_element_located((By.NAME, 'callout')))) # enter iframe first
-    wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="yDmH0d"]/c-wiz/div/div/c-wiz/div/div/div/div[2]/div[2]/button'))).click() # Click signout
-    wd.switch_to.default_content()
+    # wd.switch_to.frame(wait.until(EC.presence_of_element_located((By.NAME, 'callout')))) # enter iframe first
+    # wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="yDmH0d"]/c-wiz/div/div/c-wiz/div/div/div/div[2]/div[2]/button'))).click() # Click signout
+    # wd.switch_to.default_content()
     wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'gLFyf'))).send_keys(str(keyword) + ' ' + str(keyword_add))
     wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'gLFyf'))).send_keys(Keys.RETURN)
     time.sleep(2)
@@ -184,11 +184,11 @@ for_excel2.columns = columns
 for_excel2.to_excel(excel_out)
 excel_out.close()
 
-for link in for_excel2['Website']:
-    if link != 'none':
-        page = requests.get(link)
-        soup = BeautifulSoup(page.content, "html.parser")
-        print(misc.getcontactnumbers(html=soup, webdriver=webdriver, url=link, service=service, options=options))
+# for link in for_excel2['Website']:
+#     if link != 'none':
+#         page = requests.get(link)
+#         soup = BeautifulSoup(page.content, "html.parser")
+#         print(misc.getcontactnumbers(html=soup, webdriver=webdriver, url=link, service=service, options=options))
 
 f.close()
 quit()

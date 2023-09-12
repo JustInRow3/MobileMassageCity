@@ -43,6 +43,15 @@ def isbusiness(wd, wait, EC, By, NSE):
             return False
     except NSE:
         return False
+
+
+def business(soup):
+    for found in soup.findAll('div', class_='YzSd'):
+        if found.text == 'Businesses':
+            print("Business!")
+            return True
+    print('Not Business!')
+    return False
 #CAYQGA
 #YzSd
 
@@ -111,7 +120,7 @@ def getcontactnumbers(html, webdriver, url, service, options):
 #+49 - country code
 def getallemail(url):
     possible_url = ['about', 'about+us', 'impressum', 'contact', 'contact+us',
-                    'kontakt', 'impressum.html', 'kontakt.html', 'über-mich', '']
+                    'kontakt', 'impressum.html', 'kontakt.html', 'über-mich', '', 'aboutus']
     for element in possible_url:
         full_url = url + '/' + element
         response = requests.get(full_url)
