@@ -5,7 +5,10 @@ import pandas as pd
 import re
 import requests
 from bs4 import BeautifulSoup
+import nltk
+from nltk.corpus import wordnet
 
+import ftfy
 string_ = '1234134145'
 def istellnumber(string):
         int_list = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '.', ' ', '+', '(', ')']
@@ -73,11 +76,12 @@ def read_xlsx(file):
 
 def find_email(html):
     email_pattern = r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,4}"
-    emails = re.findall(email_pattern, html)
+    emails = re.findall(email_pattern, ftfy.fix_text(html))
+    print('Emails')
     print(emails)
     return emails
 
-def getcontactnumbers(html, webdriver, url, service, options):
+def getcontactnumbers(text):
     pattern1 = r'(Festnetz*[.:\0-9-\s]+)'
     pattern2 = r'(Handy*[.:\0-9-\s]+)'
     pattern3 = r'(Telefon*[.:\0-9-\s]+)'
@@ -88,25 +92,16 @@ def getcontactnumbers(html, webdriver, url, service, options):
     pattern8 = r'(Fax*[.:\0-9-\s]+)'
     pattern9 = r'((\+)[.:\0-9-\s]+)'
     pattern_list = [pattern9, pattern8, pattern7, pattern6, pattern5, pattern4, pattern3, pattern2, pattern1]
-    needs_selenium = 'Just a moment...Enable JavaScript and cookies to continue'
     collected = []
-    if html.text != needs_selenium:
-        string = html.text
-        #matches = re.findall(pattern, html.text, flags=re.IGNORECASE)
-    else:
-        wd = webdriver.Chrome(service=service, options=options)
-        wd.implicitly_wait(10)
-        wd.get(url)
-        newsoup = BeautifulSoup(wd.page_source, "html.parser")
-        string = newsoup.text
-        wd.close()
-        wd.quit()
     for pattern in pattern_list:
-        matches = re.findall(pattern, string, flags=re.IGNORECASE)
+        matches = re.findall(pattern, ftfy.fix_text(text), flags=re.IGNORECASE)
         valid_search = [valid for valid in matches if valid != []]
-        if len(valid_search) > 0:
-              collected.append(valid_search)
-        #collected.append(matches)
+        for match in valid_search:
+            if len(match) > 9:
+                collected.append(match)
+        #collected.append(valid_search)
+    print('Numbers')
+    print(collected)
     return collected
 
 #Handy: - done
@@ -118,17 +113,78 @@ def getcontactnumbers(html, webdriver, url, service, options):
 #tel : - done
 #Tel. -done
 #+49 - country code
-def getallemail(url):
-    possible_url = ['about', 'about+us', 'impressum', 'contact', 'contact+us',
-                    'kontakt', 'impressum.html', 'kontakt.html', 'über-mich', '', 'aboutus']
-    for element in possible_url:
-        full_url = url + '/' + element
-        response = requests.get(full_url)
-        if response.status_code == 200:
-            print('Web site exists')
-            page = requests.get(full_url).page_source
-            return find_email(page)
+def getall(url):
+    Email = []
+    Contact = []
+    HumanNames = []
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}
+    # if url['website']==None:
+    #     return (None, None, None)
+    if url == '':
+        pass
+    else:
+        possible_url = ['', 'about', 'about+us', 'impressum', 'contact', 'contact+us',
+                        'kontakt', 'impressum.html', 'kontakt.html', u'über-mich', 'aboutus']
+        for element in possible_url:
+            full_url = url + element
+            response = requests.get(full_url)
+            if response.status_code == 200:
+                print('Web site exists: ' + str(full_url))
+                html = requests.get(full_url, headers=headers)
+                soup = BeautifulSoup(html.content, 'html.parser')
+                correct = ftfy.fix_text(soup.text)
+                if check_readability(soup):
+                    print('Cannot read page.')
+                    pass
+                else:
+                    Email = [*Email, *(find_email(ftfy.fix_text(soup.text)))]
+                    Contact = [*Contact, *(getcontactnumbers(ftfy.fix_text(soup.text)))]
+                    HumanNames = [*HumanNames, *(getnames(ftfy.fix_text(soup.text)))]
+            else:
+                print('Web site does not exist: ' + str(full_url))
+    print(set(Email))
+    print(set(Contact))
+    print(set(HumanNames))
+    list(set(HumanNames))
+    return (Email, Contact, HumanNames)
+def check_readability(soup):
+    needs_selenium = 'Just a moment...Enable JavaScript and cookies to continue'
+    if soup.text == needs_selenium:
+        return True
+    else:
+        return False
 
-        else:
-            print('Web site does not exist')
-            return False
+def getnames(text):
+    person_list = []
+    person_names = person_list
+    def get_human_names(text):
+        tokens = nltk.tokenize.word_tokenize(text)
+        pos = nltk.pos_tag(tokens)
+        sentt = nltk.ne_chunk(pos, binary = False)
+
+        person = []
+        name = ""
+        for subtree in sentt.subtrees(filter=lambda t: t.label() == 'PERSON'):
+            for leaf in subtree.leaves():
+                person.append(leaf[0])
+            if len(person) > 1: #avoid grabbing lone surnames
+                for part in person:
+                    name += part + ' '
+                if name[:-1] not in person_list:
+                    person_list.append(name[:-1])
+                name = ''
+            person = []
+    #     print (person_list)
+
+    names = get_human_names(text)
+    for person in person_list:
+        person_split = person.split(" ")
+        for name in person_split:
+            if wordnet.synsets(name):
+                if(name in person):
+                    person_names.remove(person)
+                    break
+    print('Names')
+    print(person_names)
+    return (person_names)
