@@ -132,5 +132,3 @@ def getallemail(url):
         else:
             print('Web site does not exist')
             return False
-
-

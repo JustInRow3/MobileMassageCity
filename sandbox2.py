@@ -46,13 +46,17 @@ for_excel2 = pd.DataFrame()
 file = 'Keywords.xlsx'
 for keyword_add in misc.read_xlsx(file):
     keyword_url = urllib.parse.quote_plus((str(keyword) + ' ' + str(keyword_add)))
+    fullkeyword = str(keyword) + ' ' + str(keyword_add)
     url = r'https://www.google.com/search?q=' + keyword_url
     html = requests.get(url, headers=headers)
     soup = BeautifulSoup(html.text, 'html.parser')
     print(keyword_add)
+
     if misc.business(soup) == True:
         button = soup.find('div', class_='iNTie')
         morebusiness = button.findAll('a')
+        Results = (soup.find('div', class_='eKPi4')).text
+
         for link in morebusiness:
             link_url = link['href']
             print(link_url)
@@ -60,8 +64,17 @@ for keyword_add in misc.read_xlsx(file):
         business_soup = BeautifulSoup(businesslist.content, 'html.parser')
         establishmentlist = business_soup.findAll('div', class_='deyx8d')
 
+        table = business_soup.find('div', class_='ykYNg')
         for_save1 = pd.DataFrame()
         for_save2 = pd.DataFrame()
+
+        results_limit = ((business_soup.find('div', class_='AIYI7d').text).split(' '))[6]
+        if results_limit == 'many':
+            possible_results = 200
+            print('Possible result capped at ' + str(possible_results))
+        else:
+            possible_results = int(results_limit)
+            print('Possible results capped at ' + str(possible_results))
 
         # List every establishment main details
         for each_name in establishmentlist:
