@@ -94,7 +94,7 @@ def getcontactnumbers(text):
     pattern_list = [pattern9, pattern8, pattern7, pattern6, pattern5, pattern4, pattern3, pattern2, pattern1]
     collected = []
     for pattern in pattern_list:
-        matches = re.findall(pattern, ftfy.fix_text(text), flags=re.IGNORECASE)
+        matches = re.findall(pattern, text, flags=re.IGNORECASE)
         valid_search = [valid for valid in matches if valid != []]
         for match in valid_search:
             if len(match) > 9:
@@ -133,14 +133,14 @@ def getall(url):
                 print('Web site exists: ' + str(full_url))
                 html = requests.get(full_url, headers=headers)
                 soup = BeautifulSoup(html.content, 'html.parser')
-                correct = ftfy.fix_text(soup.text)
+                #correct = ftfy.fix_text(soup.text)
                 if check_readability(soup):
                     print('Cannot read page.')
                     pass
                 else:
-                    Email = [*Email, *(find_email(ftfy.fix_text(soup.text)))]
-                    Contact = [*Contact, *(getcontactnumbers(ftfy.fix_text(soup.text)))]
-                    HumanNames = [*HumanNames, *(getnames(ftfy.fix_text(soup.text)))]
+                    Email = [*Email, *(find_email(soup.text))]
+                    Contact = [*Contact, *(getcontactnumbers(soup.text))]
+                    HumanNames = [*HumanNames, *(getnames(soup.text))]
             else:
                 print('Web site does not exist: ' + str(full_url))
     print(set(Email))
@@ -187,4 +187,25 @@ def getnames(text):
                     break
     print('Names')
     print(person_names)
-    return (person_names)
+    name_gender = []
+    for first_name in person_names:
+        #first name
+        first = first_name.split(' ')[0]
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}
+        genderchecker = r'http://www.namegenderpro.com/search-result/?gender_name='
+        gender_url = genderchecker + first
+        response = requests.get(gender_url)
+        if response.status_code == 200:
+            html = requests.get(gender_url, headers=headers)
+            soup = BeautifulSoup(html.content, 'html.parser')
+            gender = soup.find('div', class_='searchresult_top_heading')
+            gender = (gender.find('b')).text
+            if gender in ['Male', 'Female', 'Unisex']:
+                name_gender.append(first_name + '-' + gender)
+                print(first + '-' + str(gender))
+            else:
+                name_gender.append(first_name + '-' + 'Gender Unknown')
+                print(first + ' - Gender Unknown!')
+    print(name_gender)
+    return (name_gender)

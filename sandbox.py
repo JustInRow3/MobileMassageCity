@@ -1,3 +1,5 @@
+
+
 import requests
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException as NSE
@@ -73,7 +75,7 @@ soup = BeautifulSoup(page.content, "html.parser")
 #misc.find_email(soup.text)
 #print(soup.text)
 print(soup)
-
+import ftfy
 #+49 (0) 30 403 67 70 77
 #Festnetz: 030/403677077
 #about
@@ -90,4 +92,7 @@ options.page_load_strategy = 'eager' # Webdriver waits until DOMContentLoaded ev
 # print(BeautifulSoup(wd.page_source, "html.parser"))
 
 #print(page.get_attribute('outerHTML'))
-print(misc.getcontactnumbers(html=soup, webdriver=webdriver, url=Url, service=service, options=options))
+#print(misc.getcontactnumbers(html=soup, webdriver=webdriver, url=Url, service=service, options=options))
+
+with open('output.txt', 'w', encoding='utf-16') as text_file:
+    print(soup.text, file=text_file)
