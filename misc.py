@@ -8,8 +8,6 @@ from bs4 import BeautifulSoup
 import nltk
 from nltk.corpus import wordnet
 
-import ftfy
-string_ = '1234134145'
 def istellnumber(string):
         int_list = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '.', ' ', '+', '(', ')']
         return all([(x in int_list) for x in string])
@@ -76,7 +74,7 @@ def read_xlsx(file):
 
 def find_email(html):
     email_pattern = r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,4}"
-    emails = re.findall(email_pattern, ftfy.fix_text(html))
+    emails = re.findall(email_pattern, html)
     print('Emails')
     print(emails)
     return emails
@@ -124,16 +122,16 @@ def getall(url):
     if url == '':
         pass
     else:
-        possible_url = ['', 'about', 'about+us', 'impressum', 'contact', 'contact+us',
-                        'kontakt', 'impressum.html', 'kontakt.html', u'über-mich', 'aboutus']
+        possible_url = ['', 'impressum', 'contact', 'contact+us','kontakt', 'impressum.html', 'Impressum.html', 'kontakt.html']
+        #remove 'about', 'about+us', , 'über-mich', 'aboutus'
         for element in possible_url:
             full_url = url + element
             response = requests.get(full_url)
             if response.status_code == 200:
                 print('Web site exists: ' + str(full_url))
-                html = requests.get(full_url, headers=headers)
+                session = requests.Session()
+                html = session.get(full_url, headers=headers)
                 soup = BeautifulSoup(html.content, 'html.parser')
-                #correct = ftfy.fix_text(soup.text)
                 if check_readability(soup):
                     print('Cannot read page.')
                     pass
@@ -143,11 +141,12 @@ def getall(url):
                     HumanNames = [*HumanNames, *(getnames(soup.text))]
             else:
                 print('Web site does not exist: ' + str(full_url))
-    print(set(Email))
-    print(set(Contact))
-    print(set(HumanNames))
-    list(set(HumanNames))
-    return (Email, Contact, HumanNames)
+    Email_string = ",".join(str(x) for x in list(set(Email)))
+    Contact_string = ",".join(str(x) for x in list(set(Contact)))
+    HumanNames_string = ",".join(str(x) for x in list(set(HumanNames)))
+    print(HumanNames_string)
+    data = pd.DataFrame([url, Email_string, Contact_string, HumanNames_string])
+    return (data)
 def check_readability(soup):
     needs_selenium = 'Just a moment...Enable JavaScript and cookies to continue'
     if soup.text == needs_selenium:
@@ -185,8 +184,8 @@ def getnames(text):
                 if(name in person):
                     person_names.remove(person)
                     break
-    print('Names')
-    print(person_names)
+    #print('Names')
+    #print(person_names)
     name_gender = []
     for first_name in person_names:
         #first name
@@ -197,15 +196,47 @@ def getnames(text):
         gender_url = genderchecker + first
         response = requests.get(gender_url)
         if response.status_code == 200:
-            html = requests.get(gender_url, headers=headers)
+            session = requests.Session()
+            html = session.get(gender_url, headers=headers)
             soup = BeautifulSoup(html.content, 'html.parser')
             gender = soup.find('div', class_='searchresult_top_heading')
             gender = (gender.find('b')).text
             if gender in ['Male', 'Female', 'Unisex']:
                 name_gender.append(first_name + '-' + gender)
-                print(first + '-' + str(gender))
-            else:
-                name_gender.append(first_name + '-' + 'Gender Unknown')
-                print(first + ' - Gender Unknown!')
     print(name_gender)
+    return (name_gender)
+def getnames2(text):
+    pattern1 = "([A-ZÄÖÜß][a-zäßöü]+\s)(von|Von|da|Da|de|De|d'|du|Della|del|Del|della|di|y|Y'|[A-Z].)(\s[A-ZÄÖÜß][a-zäßöü,]+|[A-ZÄÖÜß][a-zäßöü,]+)" #Von/von--Good
+    pattern2 = '([A-ZÄÖÜß][a-zäöüéàèéùâêßîôûçëïü]+[- ][A-ZÄÖÜß][a-zäßöüééàèùâêîôûçëïü]+)' #-- 2words
+    pattern3 = '([A-ZÄÖÜß][a-zäöüééàèùâßêîôûçëïü]+[- ][A-ZÄÖÜß][a-zäöüééàèùâêßîôûçëïü]+[ -][A-ZÄÖÜß][a-zäöüéàèùâêßîôûçëïü]+)' #--3words
+    pattern4 = '([A-ZÄÖÜß][a-zäöüéàèùâßêîôûçëïü]+ [- ][A-ZÄÖÜß][a-zäöüéàèéùâßêîôûçëïü]+[ -][A-ZÄÖÜß][a-zäöüééàèùâêîôûçßëïü]+[ -][A-ZÄÖÜß][a-zäöüéàèùâßêîéôûçëïü]+)' #4words
+    pat_regex = re.compile("|".join("({})".format(x) for x in [pattern4, pattern3, pattern2, pattern1]))
+    matches = pat_regex.findall(text)
+    #matches = re.findall(pattern, text)
+    for_filter = list(set(matches))
+    name = []
+    #print(for_filter)
+    for_filter2 = [list(set(x)) for x in for_filter if x]
+    for elem in for_filter2:
+        for sub in elem:
+            if len(sub.split(' ')) > 1:
+                name.append(sub)
+    name_gender = []
+    for first_name in name:
+        #first name
+        first = first_name.split(' ')[0]
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}
+        genderchecker = r'http://www.namegenderpro.com/search-result/?gender_name='
+        gender_url = genderchecker + first
+        response = requests.get(gender_url)
+        if response.status_code == 200:
+            session = requests.Session()
+            html = session.get(gender_url, headers=headers)
+            soup = BeautifulSoup(html.content, 'html.parser')
+            gender = soup.find('div', class_='searchresult_top_heading')
+            gender = (gender.find('b')).text
+            if gender in ['Male', 'Female', 'Unisex']:
+                name_gender.append(first_name + '-' + gender)
+    #print(name_gender)
     return (name_gender)

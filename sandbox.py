@@ -1,98 +1,35 @@
+import nltk
+from nltk.corpus import wordnet
+person_list = []
+person_names = person_list
 
+def get_human_names(text):
+    tokens = nltk.tokenize.word_tokenize(text)
+    pos = nltk.pos_tag(tokens)
+    sentt = nltk.ne_chunk(pos, binary = False)
 
-import requests
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoSuchElementException as NSE
-import openpyxl
-import time
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.options import Options
-import configparser
-import os
-import misc
-import pandas as pd
+    person = []
+    name = ""
+    for subtree in sentt.subtrees(filter=lambda t: t.label() == 'PERSON'):
+        for leaf in subtree.leaves():
+            person.append(leaf[0])
+        if len(person) > 1: #avoid grabbing lone surnames
+            for part in person:
+                name += part + ' '
+            if name[:-1] not in person_list:
+                person_list.append(name[:-1])
+            name = ''
+        person = []
+#     print (person_list)
+text = "Summer School of the Arts filling fast\nWanganui people have the chance to learn the intricacies of decorative sugar art from one of the country\xe2\x80\x99s top pastry chefs at Whanganui UCOL\xe2\x80\x99s Summer School of the Arts in January.\nTalented Chef de Partie, Adele Hingston will take time away from her duties at Christchurch\xe2\x80\x99s Crowne Plaza to demonstrate the tricks and techniques of cake decorating including creating flower sprays and an introduction to royal icing.\nDemand has been high for places in the Summer School of the Arts but there are still opportunities for budding artists to hone their skills in subjects as diverse as jewellery making, culinary sugar art and creative writing. \n\xe2\x80\x9cThe painting, pattern drafting and hot glass classes filled almost immediately,\xe2\x80\x9d says Summer School Coordinator Katrina Langdon. \xe2\x80\x9cHowever there are still places available in several of the programmes.\xe2\x80\x9d\nEighteen distinguished artists will each share their particular creative talents during week long programmes in painting, writing, drawing, jewellery, fibre arts, printmaking, photography, sculpture, glass, fashion and culinary arts.\n\xe2\x80\x9cI suggest anyone who is considering joining us for the Summer School should register now. January will be here before we know it,\xe2\x80\x9d says Katrina.\nWhanganui UCOL Summer School of the Arts runs from 10-16 January 2010. Enrolments are now open and brochures are available online at www.ucol.ac.nz or contact Katrina Langdon, K.Langdon@ucol.ac.nz, Ph 06 965 3801 ex 62000.\nThe Whanganui Summer School of the Arts programme includes:\nPainting: R ob McLeod - Marks, multiples and texture, Michael Shepherd - Oil painting, Julie Grieg \xe2\x80\x93 Soft pastel painting.Drawing: Terrie Reddish \xe2\x80\x93 Botanical Drawing.Printmaking: Ron Pokrasso \xe2\x80\x93 Beyond Monotype, Stuart Duffin \xe2\x80\x93 Mezzotint printmaking.Photography: Fleur Wickes \xe2\x80\x93 The New Portrait, Rita Dibert \xe2\x80\x93 Pinholes, Holga\xe2\x80\x99s & Cyanotypes.Sculpture: Brent Sumner \xe2\x80\x93 Darjit Sculpture, Michel Tuffery \xe2\x80\x93 Sculptural Effigy.Glass: Jeff Burnette \xe2\x80\x93 Hot glass techniques, Brock Craig \xe2\x80\x93 Kiln-forming techniques.Jewellery: Craig Winton \xe2\x80\x93 Jewellery Making-Tricks of the trade.Fashion: John Kite \xe2\x80\x93 Pattern drafting for made to measure.Fibre and Fabric: Fiona Wright \xe2\x80\x93 Felting - Text and texture, Deb Price \xe2\x80\x93 Baskets and Beyond.Culinary Arts: Adele Hingston \xe2\x80\x93 Sugar art.Literature: Frankie McMillan \xe2\x80\x93 Creative writing.\nENDS \r \r"
 
-#Parse in Beautiful Soup
-from bs4 import BeautifulSoup
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoSuchElementException as NSE
-import openpyxl
-import time
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.options import Options
-import configparser
-import os
-import misc
-import pandas as pd
-#Open browser window
-
-thisfolder = os.path.dirname(os.path.abspath(__file__))
-initfile = os.path.join(thisfolder, 'config.txt')
-# print this folder
-print('config.txt location: ' + initfile)
-
-config = configparser.ConfigParser()
-# Open config file for variables
-config.read(initfile)
-keyword = config.get('MMC-VARIABLES', 'Keyword')
-print('Keyword= ' + keyword)
-autoinstalldriver = config.get('MMC-VARIABLES', 'AutoInstallDriver') # If auto-install chrome driver
-print('AutoInstallDriver= ' + autoinstalldriver)
-chromedriver = config.get('MMC-VARIABLES', 'ChromeDriver') # Path to chromedriver
-print('ChromeDriver= ' + chromedriver)
-headless = config.get('MMC-VARIABLES', 'Headless?')
-print('Headless= ' + headless)
-
-#Chromedriver Options
-options = Options()
-options.page_load_strategy = 'eager' # Webdriver waits until DOMContentLoaded event fire is returned.
-options.add_experimental_option('excludeSwitches', ['enable-logging'])
-options.headless = False
-
-if autoinstalldriver:
-    service = Service(ChromeDriverManager().install())
-else:
-    service = Service(executable_path=chromedriver)
-
-if headless == 'True':
-    options.headless = True
-
-Url = r'https://www.relaxcoach.net/impressum'
-page = requests.get(Url)
-soup = BeautifulSoup(page.content, "html.parser")
-
-# check if it contains email
-#misc.find_email(soup.text)
-#print(soup.text)
-print(soup)
-import ftfy
-#+49 (0) 30 403 67 70 77
-#Festnetz: 030/403677077
-#about
-#impressum
-#contact+us
-chromedriver = r'C:\Users\jjie\.wdm\drivers\chromedriver\win64\116.0.5845.180\chromedriver-win32\chromedriver.exe'
-service = Service(executable_path=chromedriver)
-options = Options()
-options.page_load_strategy = 'eager' # Webdriver waits until DOMContentLoaded event fire is returned.
-#service = Service(ChromeDriverManager().install())
-# wd = webdriver.Chrome(service=service, options=options)
-# wd.implicitly_wait(10)
-#wd.get(Url)
-# print(BeautifulSoup(wd.page_source, "html.parser"))
-
-#print(page.get_attribute('outerHTML'))
-#print(misc.getcontactnumbers(html=soup, webdriver=webdriver, url=Url, service=service, options=options))
-
-with open('output.txt', 'w', encoding='utf-16') as text_file:
-    print(soup.text, file=text_file)
+names = get_human_names(text)
+for person in person_list:
+    person_split = person.split(" ")
+    for name in person_split:
+        if wordnet.synsets(name):
+            if(name in person):
+                person_names.remove(person)
+                break
+    #print('Names')
+print(person_names)
