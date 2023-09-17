@@ -1,29 +1,46 @@
-# -*- coding: utf-8 -*-
-import pandas as pd
-import misc
-import openpyxl
+import requests
+from bs4 import BeautifulSoup
+import spacy
+from langdetect import detect
 
-filetorun = 'Output' # Filename of excel input inside For_Run folder
-write_excel_path = misc.write_excel_path(filetorun)
-print(write_excel_path)
+# Load spaCy models for multiple languages
+nlp_models = {
+    'en': spacy.load('en_core_web_sm'),  # English
+    'es': spacy.load('es_core_news_sm'),  # Spanish
+    # Add more languages and models as needed
+}
 
-# Create new excel file every run
-# wb = openpyxl.Workbook()
-# ws = wb.active
-# wb.save(write_excel_path)
-# wb.close()
+# Function to extract human names from text in a specific language
+def extract_names(text, lang):
+    doc = nlp_models[lang](text)
+    names = []
+    for entity in doc.ents:
+        if entity.label_ == "PERSON":
+            names.append(entity.text)
+    return names
 
-import misc
-for_excel = pd.DataFrame()
-headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}
+# URL of the website you want to scrape
+url = "https://www.lomilomi-sisters.de/about/"
 
-url_list = [r'https://www.rebalance-massage-berlin.de/']
-for url in url_list:
-    output = misc.getall(url).transpose()
-    for_excel = pd.concat([for_excel, output], ignore_index=True)
-    for_excel.columns = ['website', 'email', 'contact', 'possible_human_name']
-excel_out = pd.ExcelWriter(write_excel_path)
-for_excel.to_excel(excel_out)
-excel_out.close()
+# Send an HTTP GET request to the website
+response = requests.get(url)
 
+# Check if the request was successful
+if response.status_code == 200:
+    # Parse the HTML content of the page using BeautifulSoup
+    soup = BeautifulSoup(response.text, "html.parser")
 
+    # Extract text content from the website (you may need to refine this based on the website's structure)
+    text = soup.get_text()
+
+    # Detect the language of the text
+    detected_language = detect(text)
+
+    # Extract human names based on the detected language
+    if detected_language in nlp_models:
+        names = extract_names(text, detected_language)
+        print(f"Names in {detected_language}: {names}")
+    else:
+        print("No NLP model available for the detected language.")
+else:
+    print("Failed to retrieve the web page.")
