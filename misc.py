@@ -7,34 +7,44 @@ import requests
 from bs4 import BeautifulSoup
 import nltk
 from nltk.corpus import wordnet
+import concurrent.futures
+
 
 def istellnumber(string):
-        int_list = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '.', ' ', '+', '(', ')']
-        return all([(x in int_list) for x in string])
-#print(istellnumber(string_))
+    int_list = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '.', ' ', '+', '(', ')']
+    return all([(x in int_list) for x in string])
+
+
+# print(istellnumber(string_))
 def isOpen(string):
-        test1 = (string.lower()).find('open')
-        test2 = (string.lower()).find('close')
-        if test1 == -1 or test2 == -1:
-                return False
-        else:
-                return True
-#print(isOpen(string_))
+    test1 = (string.lower()).find('open')
+    test2 = (string.lower()).find('close')
+    if test1 == -1 or test2 == -1:
+        return False
+    else:
+        return True
+
+
+# print(isOpen(string_))
 def writelogs():
     filename_date = time.strftime("%Y%m%d%H%M%S", time.localtime())
     script_dir = Path(os.path.dirname(__file__))  # <-- absolute dir the script is in
     rel_path = Path(r"/Logs/" + 'Logs_' + filename_date + '.out')
     new_file = script_dir.joinpath(*rel_path.parts[1:])
-    #abs_file_path = os.path.join(script_dir, rel_path)
+    # abs_file_path = os.path.join(script_dir, rel_path)
     return new_file
+
+
 def write_excel_path(file):
     filename_date = time.strftime("_%Y%m%d%H%M%S", time.localtime())
     script_dir = Path(os.path.dirname(__file__))  # <-- absolute dir the script is in
     rel_path = Path(r"/Done_Run/" + file + filename_date + '.xlsx')
     new_file = script_dir.joinpath(*rel_path.parts[1:])
-    #abs_file_path = os.path.join(script_dir, rel_path)
+    # abs_file_path = os.path.join(script_dir, rel_path)
     return new_file
-#print(write_excel_path('file'))
+
+
+# print(write_excel_path('file'))
 
 def isbusiness(wd, wait, EC, By, NSE):
     try:
@@ -53,19 +63,24 @@ def business(soup):
             return True
     print('Not Business!')
     return False
-#CAYQGA
-#YzSd
+
+
+# CAYQGA
+# YzSd
 
 def file_(file):
     script_dir = Path(os.path.dirname(__file__))  # <-- absolute dir the script is in
     rel_path = Path("/For_Run/" + file)
-    #abs_file_path = os.path.join(script_dir, rel_path)
+    # abs_file_path = os.path.join(script_dir, rel_path)
     new_file = script_dir.joinpath(*rel_path.parts[1:])
     return new_file
+
+
 def read_xlsx(file):
     data = pd.read_excel(file_(file))
-    #print(data['Keyword'])
+    # print(data['Keyword'])
     return data['Keyword']
+
 
 # - Kontakt
 # - Über uns
@@ -78,6 +93,7 @@ def find_email(html):
     print('Emails')
     print(emails)
     return emails
+
 
 def getcontactnumbers(text):
     pattern1 = r'(Festnetz*[.:\0-9-\s]+)'
@@ -97,20 +113,21 @@ def getcontactnumbers(text):
         for match in valid_search:
             if len(match) > 9:
                 collected.append(match)
-        #collected.append(valid_search)
+        # collected.append(valid_search)
     print('Numbers')
     print(collected)
     return collected
 
-#Handy: - done
-#Telefon - done
-#Mobil -done
-#Fon - done
-#Telefax
-#Festnetz - done
-#tel : - done
-#Tel. -done
-#+49 - country code
+
+# Handy: - done
+# Telefon - done
+# Mobil -done
+# Fon - done
+# Telefax
+# Festnetz - done
+# tel : - done
+# Tel. -done
+# +49 - country code
 def getall(url):
     Email = []
     Contact = []
@@ -122,8 +139,9 @@ def getall(url):
     if url == '':
         pass
     else:
-        possible_url = ['', 'impressum', 'contact', 'contact+us','kontakt', 'impressum.html', 'Impressum.html', 'kontakt.html']
-        #remove 'about', 'about+us', , 'über-mich', 'aboutus'
+        possible_url = ['', 'impressum', 'contact', 'contact+us', 'kontakt', 'impressum.html', 'Impressum.html',
+                        'kontakt.html']
+        # remove 'about', 'about+us', , 'über-mich', 'aboutus'
         for element in possible_url:
             full_url = url + element
             response = requests.get(full_url)
@@ -147,6 +165,8 @@ def getall(url):
     print(HumanNames_string)
     data = pd.DataFrame([url, Email_string, Contact_string, HumanNames_string])
     return (data)
+
+
 def check_readability(soup):
     needs_selenium = 'Just a moment...Enable JavaScript and cookies to continue'
     if soup.text == needs_selenium:
@@ -154,26 +174,29 @@ def check_readability(soup):
     else:
         return False
 
+
 def getnames(text):
     person_list = []
     person_names = person_list
+
     def get_human_names(text):
         tokens = nltk.tokenize.word_tokenize(text)
         pos = nltk.pos_tag(tokens)
-        sentt = nltk.ne_chunk(pos, binary = False)
+        sentt = nltk.ne_chunk(pos, binary=False)
 
         person = []
         name = ""
         for subtree in sentt.subtrees(filter=lambda t: t.label() == 'PERSON'):
             for leaf in subtree.leaves():
                 person.append(leaf[0])
-            if len(person) > 1: #avoid grabbing lone surnames
+            if len(person) > 1:  # avoid grabbing lone surnames
                 for part in person:
                     name += part + ' '
                 if name[:-1] not in person_list:
                     person_list.append(name[:-1])
                 name = ''
             person = []
+
     #     print (person_list)
 
     names = get_human_names(text)
@@ -181,14 +204,14 @@ def getnames(text):
         person_split = person.split(" ")
         for name in person_split:
             if wordnet.synsets(name):
-                if(name in person):
+                if (name in person):
                     person_names.remove(person)
                     break
-    #print('Names')
-    #print(person_names)
+    # print('Names')
+    # print(person_names)
     name_gender = []
     for first_name in person_names:
-        #first name
+        # first name
         first = first_name.split(' ')[0]
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}
@@ -205,26 +228,29 @@ def getnames(text):
                 name_gender.append(first_name + '-' + gender)
     print(name_gender)
     return (name_gender)
+
+
 def getnames2(text):
-    pattern1 = "([A-ZÄÖÜß][a-zäßöü]+\s)(von|Von|da|Da|de|De|d'|du|Della|del|Del|della|di|y|Y'|[A-Z].)(\s[A-ZÄÖÜß][a-zäßöü,]+|[A-ZÄÖÜß][a-zäßöü,]+)" #Von/von--Good
-    pattern2 = '([A-ZÄÖÜß][a-zäöüéàèéùâêßîôûçëïü]+[- ][A-ZÄÖÜß][a-zäßöüééàèùâêîôûçëïü]+)' #-- 2words
-    pattern3 = '([A-ZÄÖÜß][a-zäöüééàèùâßêîôûçëïü]+[- ][A-ZÄÖÜß][a-zäöüééàèùâêßîôûçëïü]+[ -][A-ZÄÖÜß][a-zäöüéàèùâêßîôûçëïü]+)' #--3words
-    pattern4 = '([A-ZÄÖÜß][a-zäöüéàèùâßêîôûçëïü]+ [- ][A-ZÄÖÜß][a-zäöüéàèéùâßêîôûçëïü]+[ -][A-ZÄÖÜß][a-zäöüééàèùâêîôûçßëïü]+[ -][A-ZÄÖÜß][a-zäöüéàèùâßêîéôûçëïü]+)' #4words
+    pattern1 = "([A-ZÄÖÜß][a-zäßöü]+\s)(von|Von|da|Da|de|De|d'|du|Della|del|Del|della|di|y|Y'|[A-Z].)(\s[A-ZÄÖÜß][a-zäßöü,]+|[A-ZÄÖÜß][a-zäßöü,]+)"  # Von/von--Good
+    pattern2 = '([A-ZÄÖÜß][a-zäöüéàèéùâêßîôûçëïü]+[- ][A-ZÄÖÜß][a-zäßöüééàèùâêîôûçëïü]+)'  # -- 2words
+    pattern3 = '([A-ZÄÖÜß][a-zäöüééàèùâßêîôûçëïü]+[- ][A-ZÄÖÜß][a-zäöüééàèùâêßîôûçëïü]+[ -][A-ZÄÖÜß][a-zäöüéàèùâêßîôûçëïü]+)'  # --3words
+    pattern4 = '([A-ZÄÖÜß][a-zäöüéàèùâßêîôûçëïü]+ [- ][A-ZÄÖÜß][a-zäöüéàèéùâßêîôûçëïü]+[ -][A-ZÄÖÜß][a-zäöüééàèùâêîôûçßëïü]+[ -][A-ZÄÖÜß][a-zäöüéàèùâßêîéôûçëïü]+)'  # 4words
     pat_regex = re.compile("|".join("({})".format(x) for x in [pattern4, pattern3, pattern2, pattern1]))
     matches = pat_regex.findall(text)
-    #matches = re.findall(pattern, text)
+    # matches = re.findall(pattern, text)
     for_filter = list(set(matches))
     name = []
-    #print(for_filter)
+    # print(for_filter)
     for_filter2 = [list(set(x)) for x in for_filter if x]
     for elem in for_filter2:
         for sub in elem:
-            if len(sub.split(' ')) > 1:
+            if len(sub.split(' ')) > 1 and sub.split(' ')[0] != '':
+                print(sub)
                 name.append(sub)
     name_gender = []
     for first_name in name:
-        #first name
         first = first_name.split(' ')[0]
+        print(first)
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}
         genderchecker = r'http://www.namegenderpro.com/search-result/?gender_name='
@@ -240,3 +266,63 @@ def getnames2(text):
                 name_gender.append(first_name + '-' + gender)
     #print(name_gender)
     return (name_gender)
+def getgender(url, timeout):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}
+    session = requests.Session()
+    html = session.get(url[1], headers=headers, timeout=timeout)
+    soup = BeautifulSoup(html.content, 'html.parser')
+    gender = soup.find('div', class_='searchresult_top_heading')
+    gender = (gender.find('b')).text
+    if gender in ['Male', 'Female', 'Unisex']:
+        return str(url[0]) + ' - ' + str(gender)
+
+def multithreading(url):
+    # remove 'about', 'about+us', , 'über-mich', 'aboutus'
+    for element in possible_url:
+        full_url = url + element
+        response = requests.get(full_url)
+
+
+def get_links():
+    url = r'https://www.lomilomi-sisters.de'
+    possible_url = ['', 'impressum', 'contact', 'contact+us', 'kontakt', 'impressum.html', 'Impressum.html',
+                    'kontakt.html']
+    links = [(url + '/' + pos) for pos in possible_url]
+    return links
+
+def getnames3(text):
+    pattern1 = "([A-ZÄÖÜß][a-zäßöü]+\s)(von|Von|da|Da|de|De|d'|du|Della|del|Del|della|di|y|Y'|[A-Z].)(\s[A-ZÄÖÜß][a-zäßöü,]+|[A-ZÄÖÜß][a-zäßöü,]+)"  # Von/von--Good
+    pattern2 = '([A-ZÄÖÜß][a-zäöüéàèéùâêßîôûçëïü]+[- ][A-ZÄÖÜß][a-zäßöüééàèùâêîôûçëïü]+)'  # -- 2words
+    pattern3 = '([A-ZÄÖÜß][a-zäöüééàèùâßêîôûçëïü]+[- ][A-ZÄÖÜß][a-zäöüééàèùâêßîôûçëïü]+[ -][A-ZÄÖÜß][a-zäöüéàèùâêßîôûçëïü]+)'  # --3words
+    pattern4 = '([A-ZÄÖÜß][a-zäöüéàèùâßêîôûçëïü]+ [- ][A-ZÄÖÜß][a-zäöüéàèéùâßêîôûçëïü]+[ -][A-ZÄÖÜß][a-zäöüééàèùâêîôûçßëïü]+[ -][A-ZÄÖÜß][a-zäöüéàèùâßêîéôûçëïü]+)'  # 4words
+    pat_regex = re.compile("|".join("({})".format(x) for x in [pattern4, pattern3, pattern2, pattern1]))
+    matches = pat_regex.findall(text)
+    for_filter = list(set(matches))
+    name_url = []
+    genders = []
+    for_filter2 = [list(set(x)) for x in for_filter if x]
+    genderchecker = r'http://www.namegenderpro.com/search-result/?gender_name='
+    for elem in for_filter2:
+        for sub in elem:
+            if len(sub.split(' ')) > 1 and sub.split(' ')[0] != '' and sub.split(' ')[1] != '':
+                print(sub)
+                name_url.append((sub, (str(genderchecker)+str(sub.split(' ')[0]))))
+    print(name_url)
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = []
+        for url in name_url:
+            futures.append(
+                executor.submit(
+                    getgender, url=url, timeout=20
+                )
+            )
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                if future.result() is not None:
+                    genders.append(future.result())
+                    print(future.result())
+            except requests.ConnectTimeout:
+                print("ConnectTimeout.")
+    return genders
+
