@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 import concurrent.futures
 from retrying import retry
 from ratelimit import limits, sleep_and_retry
-
+import csv
 
 def istellnumber(string):
     int_list = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '.', ' ', '+', '(', ')']
@@ -104,7 +104,9 @@ def getcontactnumbers(text):
     pattern7 = r'(Telefax*[.:\0-9-\s]+)'
     pattern8 = r'(Fax*[.:\0-9-\s]+)'
     pattern9 = r'\+49[().:\0-9-\s]+'
-    pattern_list = [pattern9, pattern8, pattern7, pattern6, pattern5, pattern4, pattern3, pattern2, pattern1]
+    pattern10 = r'Festnetz: (\d{3} - \d{2} \d{2} \d{2} \d{2})'
+    pattern11 = r'Mobil:\s+(\d{4} - \d{3} \d{2} \d{2} \d{2})'
+    pattern_list = [pattern9, pattern8, pattern7, pattern6, pattern5, pattern4, pattern3, pattern2, pattern1, pattern10, pattern11]
     collected = []
     for pattern in pattern_list:
         matches = re.findall(pattern, text, flags=re.IGNORECASE)
@@ -228,7 +230,7 @@ def getall2(url):
     clean_list.insert(0, url)
     print(clean_list)
     return clean_list
-def mainpage(all_url):
+def mainpage(all_url, filename):
     results = []
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = []
@@ -240,6 +242,18 @@ def mainpage(all_url):
             result = future.result()
             if result != None:
                 results.append(result)
+    columns = ['website', 'email', 'number', 'name-gender']
+    file_path = str(filename) + '-details.csv'
+    # Open the CSV file in write mode with a newline parameter
+    with open(file_path, 'w', newline='') as csv_file:
+        csv_writer = csv.writer(csv_file)
+
+        # Write the header row first
+        csv_writer.writerow(columns)
+
+        # Write the data rows
+        for row in results:
+            csv_writer.writerow(row)
     print(results)
 
 
