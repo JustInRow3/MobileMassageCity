@@ -207,12 +207,12 @@ def getnames3(text):
                 print("ConnectTimeout.")
     return genders
 
-def getall2(url):
-    if url == None:
+def getall2(url_main):
+    if url_main == None:
         pass
     else:
         results = []
-        all_url = get_links(url)
+        all_url = get_links(url_main)
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = []
             for url in all_url:
@@ -225,7 +225,7 @@ def getall2(url):
                     results.append(result)
     output_list = [sum(sublist, []) for sublist in zip(*results)]
     clean_list = ['; '.join(list(set(x))) for x in output_list]
-    clean_list.insert(0, url)
+    clean_list.insert(0, url_main)
     print(clean_list)
     return clean_list
 def mainpage(all_url, filename):
