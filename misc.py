@@ -6,6 +6,7 @@ import re
 import requests
 from bs4 import BeautifulSoup
 import concurrent.futures
+from retrying import retry
 
 
 def istellnumber(string):
@@ -118,8 +119,7 @@ def getcontactnumbers(text):
     return collected
 
 def getalltext(url, timeout):
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}
     response = requests.get(url)
     if response.status_code == 200:
         session = requests.Session()
@@ -144,19 +144,24 @@ def check_readability(soup):
 
 
 def getgender(url, timeout):
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}
-    try:
+    # Define a retry decorator with exponential backoff
+    @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_attempt_number=5)
+    def make_request(url):
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}
         session = requests.Session()
         html = session.get(url[1], headers=headers, timeout=timeout)
-        html.raise_for_status()
+        html.raise_for_status()  # Check for HTTP errors
+        return html
+    try:
+        html = make_request(url)
         soup = BeautifulSoup(html.content, 'html.parser')
         gender = soup.find('div', class_='searchresult_top_heading')
         gender = (gender.find('b')).text
         if gender in ['Male', 'Female', 'Unisex']:
             return str(url[0]) + ' - ' + str(gender)
     except requests.exceptions.RequestException as e:
-        print(f"Request failed: {e}")
+        print(f"Request failed after retries: {e}")
 def get_links(url):
     possible_url = ['impressum.html', 'Impressum.html', 'impressum', 'about', 'about+us', 'aboutus', 'kontakt.html', 'kontakt']
     links = [(url + '/' + pos) for pos in possible_url]
@@ -207,18 +212,29 @@ def getall2(url):
             futures = []
             for url in all_url:
                 # Submit tasks to the executor
-                futures.append(executor.submit(getalltext, url, 30))
+                futures.append(executor.submit(getalltext, url, 50))
             concurrent.futures.wait(futures)
             for future in futures:
                 result = future.result()
                 if result != None:
                     results.append(result)
-    #print(results)
-    #Clean
     output_list = [sum(sublist, []) for sublist in zip(*results)]
     clean_list = ['; '.join(list(set(x))) for x in output_list]
+    clean_list.insert(0, url)
     print(clean_list)
-
-
+    return clean_list
+def mainpage(all_url):
+    results = []
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = []
+        for url in all_url:
+            # Submit tasks to the executor
+            futures.append(executor.submit(getall2, url))
+        concurrent.futures.wait(futures)
+        for future in futures:
+            result = future.result()
+            if result != None:
+                results.append(result)
+    print(results)
 
 
