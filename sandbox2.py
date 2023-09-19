@@ -1,46 +1,42 @@
+import re
 import requests
 from bs4 import BeautifulSoup
-import spacy
-from langdetect import detect
 
-# Load spaCy models for multiple languages
-nlp_models = {
-    'en': spacy.load('en_core_web_sm'),  # English
-    'es': spacy.load('es_core_news_sm'),  # Spanish
-    # Add more languages and models as needed
-}
+# Function to extract phone numbers from text
+def extract_phone_numbers(text):
+    # Use a regular expression to find phone numbers
+    phone_pattern = r'\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b'
+    phone_numbers = re.findall(phone_pattern, text)
+    return phone_numbers
 
-# Function to extract human names from text in a specific language
-def extract_names(text, lang):
-    doc = nlp_models[lang](text)
-    names = []
-    for entity in doc.ents:
-        if entity.label_ == "PERSON":
-            names.append(entity.text)
-    return names
+# Function to extract phone numbers from a website
+def extract_phone_numbers_from_website(url):
+    # Send an HTTP GET request to the website
+    response = requests.get(url)
 
-# URL of the website you want to scrape
-url = "https://www.lomilomi-sisters.de/about/"
+    # Check if the request was successful
+    if response.status_code == 200:
+        # Parse the HTML content using BeautifulSoup
+        soup = BeautifulSoup(response.text, 'html.parser')
 
-# Send an HTTP GET request to the website
-response = requests.get(url)
+        # Extract text content from the website
+        text_content = soup.get_text()
 
-# Check if the request was successful
-if response.status_code == 200:
-    # Parse the HTML content of the page using BeautifulSoup
-    soup = BeautifulSoup(response.text, "html.parser")
+        # Extract phone numbers from the text content
+        phone_numbers = extract_phone_numbers(text_content)
 
-    # Extract text content from the website (you may need to refine this based on the website's structure)
-    text = soup.get_text()
-
-    # Detect the language of the text
-    detected_language = detect(text)
-
-    # Extract human names based on the detected language
-    if detected_language in nlp_models:
-        names = extract_names(text, detected_language)
-        print(f"Names in {detected_language}: {names}")
+        return phone_numbers
     else:
-        print("No NLP model available for the detected language.")
+        print(f"Failed to retrieve content from {url}. Status code: {response.status_code}")
+        return []
+
+# Example usage
+website_url = 'https://www.magoose-massage-yoga.de/kontakt'  # Replace with the URL of the website you want to scrape
+phone_numbers = extract_phone_numbers_from_website(website_url)
+
+if phone_numbers:
+    print("Phone numbers found on the website:")
+    for phone_number in phone_numbers:
+        print(phone_number)
 else:
-    print("Failed to retrieve the web page.")
+    print("No phone numbers found on the website.")

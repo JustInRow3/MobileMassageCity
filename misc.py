@@ -88,7 +88,6 @@ def read_xlsx(file):
 def find_email(html):
     email_pattern = r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,4}"
     emails = re.findall(email_pattern, html)
-    print('Emails')
     print(emails)
     return emails
 
@@ -102,7 +101,7 @@ def getcontactnumbers(text):
     pattern6 = r'(Fon*[.:\0-9-\s]+)'
     pattern7 = r'(Telefax*[.:\0-9-\s]+)'
     pattern8 = r'(Fax*[.:\0-9-\s]+)'
-    pattern9 = r'((\+)[.:\0-9-\s]+)'
+    pattern9 = r'\+49[().:\0-9-\s]+'
     pattern_list = [pattern9, pattern8, pattern7, pattern6, pattern5, pattern4, pattern3, pattern2, pattern1]
     collected = []
     for pattern in pattern_list:
@@ -118,54 +117,6 @@ def getcontactnumbers(text):
     print(collected)
     return collected
 
-
-# Handy: - done
-# Telefon - done
-# Mobil -done
-# Fon - done
-# Telefax
-# Festnetz - done
-# tel : - done
-# Tel. -done
-# +49 - country code
-def getall(url):
-    Email = []
-    Contact = []
-    HumanNames = []
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}
-    # if url['website']==None:
-    #     return (None, None, None)
-    if url == None:
-        pass
-    else:
-        possible_url = ['', 'impressum', 'contact', 'contact+us', 'kontakt', 'impressum.html', 'Impressum.html',
-                        'kontakt.html', 'about', 'about+us', 'über-mich', 'aboutus']
-        # remove 'about', 'about+us', , 'über-mich', 'aboutus'
-        for element in possible_url:
-            full_url = url + element
-            response = requests.get(full_url)
-            if response.status_code == 200:
-                print('Web site exists: ' + str(full_url))
-                session = requests.Session()
-                html = session.get(full_url, headers=headers)
-                soup = BeautifulSoup(html.content, 'html.parser')
-                if check_readability(soup):
-                    print('Cannot read page.')
-                    pass
-                else:
-                    Email = [*Email, *(find_email(soup.text))]
-                    Contact = [*Contact, *(getcontactnumbers(soup.text))]
-                    HumanNames = [*HumanNames, *(getnames(soup.text))]
-            else:
-                print('Web site does not exist: ' + str(full_url))
-    Email_string = ",".join(str(x) for x in list(set(Email)))
-    Contact_string = ",".join(str(x) for x in list(set(Contact)))
-    HumanNames_string = ",".join(str(x) for x in list(set(HumanNames)))
-    print(HumanNames_string)
-    data = pd.DataFrame([url, Email_string, Contact_string, HumanNames_string])
-    return (data)
-
 def getalltext(url, timeout):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}
@@ -178,12 +129,11 @@ def getalltext(url, timeout):
             print(url + '- Cannot read page.')
             pass
         else:
+            print('Found:' + url)
             Email = find_email(soup.text)
             Contact = getcontactnumbers(soup.text)
-            HumanNames = getnames3(soup.text)
-            print('Found: ' + url)
-            print(Email, Contact, HumanNames)
-            return (Email, Contact, HumanNames)
+            Name = getnames3(soup.text)
+            return (Email, Contact, Name)
 
 def check_readability(soup):
     needs_selenium = 'Just a moment...Enable JavaScript and cookies to continue'
@@ -196,16 +146,19 @@ def check_readability(soup):
 def getgender(url, timeout):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}
-    session = requests.Session()
-    html = session.get(url[1], headers=headers, timeout=timeout)
-    soup = BeautifulSoup(html.content, 'html.parser')
-    gender = soup.find('div', class_='searchresult_top_heading')
-    gender = (gender.find('b')).text
-    if gender in ['Male', 'Female', 'Unisex']:
-        return str(url[0]) + ' - ' + str(gender)
-
+    try:
+        session = requests.Session()
+        html = session.get(url[1], headers=headers, timeout=timeout)
+        html.raise_for_status()
+        soup = BeautifulSoup(html.content, 'html.parser')
+        gender = soup.find('div', class_='searchresult_top_heading')
+        gender = (gender.find('b')).text
+        if gender in ['Male', 'Female', 'Unisex']:
+            return str(url[0]) + ' - ' + str(gender)
+    except requests.exceptions.RequestException as e:
+        print(f"Request failed: {e}")
 def get_links(url):
-    possible_url = ['', 'impressum', 'impressum.html', 'Impressum.html', 'about', 'about+us', 'aboutus']
+    possible_url = ['impressum.html', 'Impressum.html', 'impressum', 'about', 'about+us', 'aboutus', 'kontakt.html', 'kontakt']
     links = [(url + '/' + pos) for pos in possible_url]
     return links
 
@@ -232,7 +185,7 @@ def getnames3(text):
         for url in name_url:
             futures.append(
                 executor.submit(
-                    getgender, url=url, timeout=20
+                    getgender, url=url, timeout=30
                 )
             )
         for future in concurrent.futures.as_completed(futures):
@@ -245,29 +198,27 @@ def getnames3(text):
     return genders
 
 def getall2(url):
-    # Email = []
-    # Contact = []
-    # HumanNames = []
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}
-    # if url['website']==None:
-    #     return (None, None, None)
     if url == None:
         pass
     else:
+        results = []
         all_url = get_links(url)
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = []
             for url in all_url:
-                futures.append(
-                    executor.submit(
-                        getalltext, url=url, timeout=20
-                    )
-                )
-            for future in concurrent.futures.as_completed(futures):
-                try:
-                    if future.result() is not None:
-                        print(future.result())
-                except requests.ConnectTimeout:
-                    print("ConnectTimeout.")
+                # Submit tasks to the executor
+                futures.append(executor.submit(getalltext, url, 30))
+            concurrent.futures.wait(futures)
+            for future in futures:
+                result = future.result()
+                if result != None:
+                    results.append(result)
+    #print(results)
+    #Clean
+    output_list = [sum(sublist, []) for sublist in zip(*results)]
+    clean_list = ['; '.join(list(set(x))) for x in output_list]
+    print(clean_list)
+
+
+
 
