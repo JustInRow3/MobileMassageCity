@@ -7,6 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 import concurrent.futures
 from retrying import retry
+from ratelimit import limits, sleep_and_retry
 
 
 def istellnumber(string):
@@ -144,6 +145,9 @@ def check_readability(soup):
 
 
 def getgender(url, timeout):
+    # Define the rate limit (requests per second)
+    @sleep_and_retry
+    @limits(calls=5, period=1)  # 5 requests per second
     # Define a retry decorator with exponential backoff
     @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_attempt_number=5)
     def make_request(url):
@@ -158,6 +162,7 @@ def getgender(url, timeout):
         soup = BeautifulSoup(html.content, 'html.parser')
         gender = soup.find('div', class_='searchresult_top_heading')
         gender = (gender.find('b')).text
+        time.sleep(0.5)
         if gender in ['Male', 'Female', 'Unisex']:
             return str(url[0]) + ' - ' + str(gender)
     except requests.exceptions.RequestException as e:
@@ -190,7 +195,7 @@ def getnames3(text):
         for url in name_url:
             futures.append(
                 executor.submit(
-                    getgender, url=url, timeout=30
+                    getgender, url=url, timeout=50
                 )
             )
         for future in concurrent.futures.as_completed(futures):
