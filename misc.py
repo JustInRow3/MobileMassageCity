@@ -104,9 +104,7 @@ def getcontactnumbers(text):
     pattern7 = r'(Telefax*[.:\0-9-\s]+)'
     pattern8 = r'(Fax*[.:\0-9-\s]+)'
     pattern9 = r'\+49[().:\0-9-\s]+'
-    pattern10 = r'Festnetz: (\d{3} - \d{2} \d{2} \d{2} \d{2})'
-    pattern11 = r'Mobil:\s+(\d{4} - \d{3} \d{2} \d{2} \d{2})'
-    pattern_list = [pattern9, pattern8, pattern7, pattern6, pattern5, pattern4, pattern3, pattern2, pattern1, pattern10, pattern11]
+    pattern_list = [pattern9, pattern8, pattern7, pattern6, pattern5, pattern4, pattern3, pattern2, pattern1,]
     collected = []
     for pattern in pattern_list:
         matches = re.findall(pattern, text, flags=re.IGNORECASE)
